@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kryptografia/crypto_logic/crypto_type.dart';
-import 'package:kryptografia/encrypt_page.dart';
+import 'package:kryptografia/pages/encrypt_page/encrypt_page.dart';
+import 'package:kryptografia/pages/hamming_page/hamming_page.dart';
 
 class ConsoleButton extends StatelessWidget {
   final CryptoType cryptoType;
@@ -11,7 +12,14 @@ class ConsoleButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) =>  EncryptPage(cryptoType: cryptoType,)));
+        if (cryptoType != CryptoType.hamming) {
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => EncryptPage(
+                    cryptoType: cryptoType,
+                  )));
+        } else {
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) =>  HammingCodeScreen()));
+        }
       },
       child: Material(
         shape: const BeveledRectangleBorder(

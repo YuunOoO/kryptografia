@@ -1,9 +1,9 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
-import 'package:kryptografia/crypto_code_input.dart';
-import 'package:kryptografia/crypto_decrypt_button.dart';
-import 'package:kryptografia/crypto_encrypt_button.dart';
-import 'package:kryptografia/crypto_input.dart';
+import 'package:kryptografia/pages/encrypt_page/crypto_code_input.dart';
+import 'package:kryptografia/pages/encrypt_page/crypto_decrypt_button.dart';
+import 'package:kryptografia/pages/encrypt_page/crypto_encrypt_button.dart';
+import 'package:kryptografia/pages/encrypt_page/crypto_text_input.dart';
 import 'package:kryptografia/crypto_logic/crypto_logic.dart';
 import 'package:kryptografia/crypto_logic/crypto_type.dart';
 
@@ -67,7 +67,7 @@ class _EncryptPageState extends State<EncryptPage> {
                         ]),
                       ),
                     ),
-                    CryptoInput(controller: textInputController, label: "Podaj tekst do zaszyfrowania"),
+                    CryptoTextInput(controller: textInputController, label: "Podaj tekst do zaszyfrowania"),
                     if (widget.cryptoType != CryptoType.base64)
                       CryptoCodeInput(
                         label: "Podaj kod",

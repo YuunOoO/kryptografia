@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-class CryptoInput extends StatelessWidget {
+class CryptoTextInput extends StatelessWidget {
   final TextEditingController controller;
   final String label;
 
-  const CryptoInput({super.key, required this.controller, required this.label});
+  const CryptoTextInput({super.key, required this.controller, required this.label});
 
   @override
   Widget build(BuildContext context) {

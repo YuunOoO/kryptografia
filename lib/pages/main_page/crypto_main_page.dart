@@ -1,6 +1,6 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
-import 'package:kryptografia/console_button.dart';
+import 'package:kryptografia/pages/main_page/console_button.dart';
 import 'package:kryptografia/crypto_logic/crypto_type.dart';
 
 class CryptoMainPage extends StatefulWidget {
@@ -63,7 +63,7 @@ class _CryptoMainPageState extends State<CryptoMainPage> {
                     Column(
                       children: [
                         ConsoleButton(
-                          cryptoType: CryptoType.hemingway,
+                          cryptoType: CryptoType.hamming,
                         ),
                         SizedBox(
                           height: 10,

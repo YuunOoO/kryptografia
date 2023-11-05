@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kryptografia/crypto_main_page.dart';
+import 'package:kryptografia/pages/main_page/crypto_main_page.dart';
 import 'package:kryptografia/providers/crypto_provider.dart';
 import 'package:provider/provider.dart';
 
