@@ -71,6 +71,12 @@ class _CryptoMainPageState extends State<CryptoMainPage> {
                         ConsoleButton(
                           cryptoType: CryptoType.base64,
                         ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        ConsoleButton(
+                          cryptoType: CryptoType.rsa,
+                        ),
                       ],
                     ),
                   ],

@@ -1,4 +1,4 @@
-enum CryptoType { caesar, polyalphabetic, transpozition, base64, hamming}
+enum CryptoType { caesar, polyalphabetic, transpozition, base64, hamming, rsa}
 
 extension CryptoTypeTypeExtension on CryptoType {
   String get type {
@@ -13,6 +13,8 @@ extension CryptoTypeTypeExtension on CryptoType {
         return "Base64";
       case CryptoType.hamming:
         return "Hamminga";
+        case CryptoType.rsa:
+        return "RSA";
     }
   }
 }
