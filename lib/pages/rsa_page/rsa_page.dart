@@ -17,11 +17,11 @@ class RsaPageState extends State<RsaPage> {
   TextEditingController qController = TextEditingController();
   String input = '';
   String logs = 'Logi:';
-  late List<int> publicKey;
-  late List<int> privateKey;
-  int tocjent = 0;
-  int iloczynPQ = 0;
-  List<int>? encryptedMessage;
+  late List<BigInt> publicKey;
+  late List<BigInt> privateKey;
+  BigInt tocjent = BigInt.zero;
+  BigInt iloczynPQ = BigInt.zero;
+  List<BigInt>? encryptedMessage;
   String decryptedMessageValue = "";
   bool encrypt = true;
   bool decrypt = false;
@@ -89,13 +89,13 @@ class RsaPageState extends State<RsaPage> {
                       generateAndEncrypt();
                       setState(() {
                         encrypt = true;
-                      decrypt = true;
+                        decrypt = true;
                       });
                     } else {
                       decryptMessage();
                       setState(() {
                         encrypt = false;
-                      decrypt = false;
+                        decrypt = false;
                       });
                     }
                   },
@@ -174,15 +174,15 @@ class RsaPageState extends State<RsaPage> {
   void generateAndEncrypt() {
     try {
       // Pobierz wartości p i q z kontrolerów
-      int p = int.parse(pController.text);
-      int q = int.parse(qController.text);
+      BigInt p = BigInt.parse(pController.text);
+      BigInt q = BigInt.parse(qController.text);
 
       // Wygeneruj klucze
       publicKey = generatePublicKey(p, q);
       privateKey = generatePrivateKey(p, q);
 
       // Zaszyfruj wiadomość
-      List<int> encryptedMessage = encryptMessage(input, publicKey);
+      List<BigInt> encryptedMessage = encryptMessage(input, publicKey);
 
       // Zaktualizuj stan
       setState(() {
@@ -196,124 +196,125 @@ class RsaPageState extends State<RsaPage> {
     }
   }
 
-  List<int> generatePublicKey(int p, int q) {
-    int n = p * q;
+  List<BigInt> generatePublicKey(BigInt p, BigInt q) {
+    BigInt n = p * q;
     iloczynPQ = n;
-    int phi = (p - 1) * (q - 1);
+    BigInt phi = (p - BigInt.one) * (q - BigInt.one);
     tocjent = phi;
-    int e = findE(phi);
+    BigInt e = findE(phi);
     return [n, e];
   }
 
-  List<int> generatePrivateKey(int p, int q) {
-    int n = p * q;
-    int phi = (p - 1) * (q - 1);
-    int e = findE(phi);
-    int d = calculateD(e, phi);
+  List<BigInt> generatePrivateKey(BigInt p, BigInt q) {
+    BigInt n = p * q;
+    BigInt phi = (p - BigInt.one) * (q - BigInt.one);
+    BigInt e = findE(phi);
+    BigInt d = calculateD(e, phi);
     return [n, d];
   }
 
-  List<int> encryptMessage(String message, List<int> publicKey) {
-    int n = publicKey[0];
-    int e = publicKey[1];
+  List<BigInt> encryptMessage(String message, List<BigInt> publicKey) {
+  BigInt n = publicKey[0];
+  BigInt e = publicKey[1];
 
-    List<int> encryptedMessage = [];
+  List<BigInt> encryptedMessage = [];
 
-    for (int i = 0; i < message.length; i++) {
-      int charCode = message.codeUnitAt(i);
-      int encryptedChar = modPow(charCode, e, n);
-      encryptedMessage.add(encryptedChar);
-    }
-
-    return encryptedMessage;
+  for (int i = 0; i < message.length; i++) {
+    int charCode = message.codeUnitAt(i);
+    BigInt encryptedChar = modPow(BigInt.from(charCode), e, n);
+    encryptedMessage.add(encryptedChar);
   }
 
-  int findE(int phi) {
-    int e = 2; // Wybierz początkową wartość dla e
+  return encryptedMessage;
+}
 
-    while (e < phi) {
-      if (isCoprime(e, phi)) {
-        break;
-      }
-      e++;
+BigInt findE(BigInt phi) {
+  BigInt e = BigInt.two; // Wybierz początkową wartość dla e
+
+  while (e < phi) {
+    if (isCoprime(e, phi)) {
+      break;
     }
-
-    return e;
+    e += BigInt.one;
   }
 
-  bool isCoprime(int a, int b) {
-    while (b != 0) {
-      int temp = b;
-      b = a % b;
-      a = temp;
-    }
-    return a == 1;
+  return e;
+}
+
+bool isCoprime(BigInt a, BigInt b) {
+  while (b != BigInt.zero) {
+    BigInt temp = b;
+    b = a % b;
+    a = temp;
+  }
+  return a == BigInt.one;
+}
+
+BigInt calculateD(BigInt e, BigInt phi) {
+  BigInt d = BigInt.one;
+
+  while ((e * d) % phi != BigInt.one) {
+    d += BigInt.one;
   }
 
-  int calculateD(int e, int phi) {
-    int d = 1;
+  return d;
+}
 
-    while ((e * d) % phi != 1) {
-      d++;
+BigInt modPow(BigInt base, BigInt exponent, BigInt modulus) {
+  if (modulus == BigInt.one) return BigInt.zero;
+
+  BigInt result = BigInt.one;
+  base = base % modulus;
+
+  while (exponent > BigInt.zero) {
+    if (exponent % BigInt.two == BigInt.one) {
+      result = (result * base) % modulus;
     }
 
-    return d;
+    exponent = exponent >> 1;
+    base = (base * base) % modulus;
   }
 
-  int modPow(int base, int exponent, int modulus) {
-    if (modulus == 1) return 0;
+  return result;
+}
 
-    int result = 1;
-    base = base % modulus;
+void decryptMessage() {
+  try {
+    // Pobierz wartości p i q z kontrolerów
+    BigInt p = BigInt.parse(pController.text);
+    BigInt q = BigInt.parse(qController.text);
 
-    while (exponent > 0) {
-      if (exponent % 2 == 1) {
-        result = (result * base) % modulus;
-      }
+    // Wygeneruj klucze prywatne
+    List<BigInt> privateKey = generatePrivateKey(p, q);
 
-      exponent = exponent >> 1;
-      base = (base * base) % modulus;
-    }
+    // Odszyfruj wiadomość
+    List<BigInt> decryptedMessage = decryptMessageHelper(encryptedMessage!, privateKey);
 
-    return result;
+    // Zaktualizuj stan
+    setState(() {
+      logs = 'Logi: Pomyślnie odszyfrowano wiadomość';
+      decryptedMessageValue = String.fromCharCodes(decryptedMessage.map((e) => e.toInt()));
+    });
+  } catch (e) {
+    setState(() {
+      logs = 'Logi: Błąd generowania kluczy lub odszyfrowywania. Sprawdź wprowadzone dane.';
+    });
+  }
+}
+
+List<BigInt> decryptMessageHelper(List<BigInt> encryptedMessage, List<BigInt> privateKey) {
+  BigInt n = privateKey[0];
+  BigInt d = privateKey[1];
+
+  List<BigInt> decryptedMessage = [];
+
+  for (int i = 0; i < encryptedMessage.length; i++) {
+    BigInt encryptedChar = encryptedMessage[i];
+    BigInt decryptedChar = modPow(encryptedChar, d, n);
+    decryptedMessage.add(decryptedChar);
   }
 
-  void decryptMessage() {
-    try {
-      // Pobierz wartości p i q z kontrolerów
-      int p = int.parse(pController.text);
-      int q = int.parse(qController.text);
+  return decryptedMessage;
+}
 
-      // Wygeneruj klucze prywatne
-      List<int> privateKey = generatePrivateKey(p, q);
-
-      // Odszyfruj wiadomość
-      List<int> decryptedMessage = decryptMessageHelper(encryptedMessage!, privateKey);
-
-      // Zaktualizuj stan
-      setState(() {
-        logs = 'Logi: Pomyślnie odszyfrowano wiadomość';
-        decryptedMessageValue = String.fromCharCodes(decryptedMessage);
-      });
-    } catch (e) {
-      setState(() {
-        logs = 'Logi: Błąd generowania kluczy lub odszyfrowywania. Sprawdź wprowadzone dane.';
-      });
-    }
-  }
-
-  List<int> decryptMessageHelper(List<int> encryptedMessage, List<int> privateKey) {
-    int n = privateKey[0];
-    int d = privateKey[1];
-
-    List<int> decryptedMessage = [];
-
-    for (int i = 0; i < encryptedMessage.length; i++) {
-      int encryptedChar = encryptedMessage[i];
-      int decryptedChar = modPow(encryptedChar, d, n);
-      decryptedMessage.add(decryptedChar);
-    }
-
-    return decryptedMessage;
-  }
 }

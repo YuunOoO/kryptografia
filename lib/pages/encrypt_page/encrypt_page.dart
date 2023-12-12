@@ -24,6 +24,22 @@ class _EncryptPageState extends State<EncryptPage> {
   String codedText = "";
   CryptoLogic cryptoLogic = CryptoLogic();
 
+  desHelperDecode() async {
+    bottomText = await cryptoLogic.desDecode(codedText, codeInputController.text);
+    print(bottomText);
+    print("hehe");
+    topText = "Odkodowana wiadomość DES:";
+    setState(() {});
+  }
+
+  desHelperEncode() async {
+    bottomText = await cryptoLogic.desEncode(textInputController.text, codeInputController.text);
+    topText = "Zakodowana wiadomość w DES:";
+    print(bottomText);
+    print("hehe");
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -106,9 +122,19 @@ class _EncryptPageState extends State<EncryptPage> {
                                   case CryptoType.transpozition:
                                     bottomText = cryptoLogic.transpositionDecrypt(
                                         codedText, int.parse(codeInputController.text));
+                                    break;
                                   case CryptoType.base64:
                                     bottomText = cryptoLogic.customBase64Decode(codedText);
                                     topText = "Odkodowana wiadomość Base64:";
+                                    break;
+                                  case CryptoType.rc4:
+                                    print("helo");
+                                    bottomText = cryptoLogic.rc4Decode(codedText, codeInputController.text);
+                                    topText = "Odkodowana wiadomość RC4:";
+                                    break;
+                                  case CryptoType.des:
+                                    desHelperDecode();
+                                    break;
                                   default:
                                     break;
                                   // Dodaj inne przypadki, jeśli masz więcej rodzajów szyfrowania
@@ -157,6 +183,15 @@ class _EncryptPageState extends State<EncryptPage> {
                                   case CryptoType.base64:
                                     bottomText = cryptoLogic.customBase64Encode(textInputController.text);
                                     topText = "Zakodowana wiadomość w Base64:";
+                                    break;
+                                  case CryptoType.rc4:
+                                    bottomText =
+                                        cryptoLogic.rc4Encode(textInputController.text, codeInputController.text);
+                                    topText = "Zakodowana wiadomość w RC4:";
+                                    break;
+                                  case CryptoType.des:
+                                    desHelperEncode();
+                                    break;
                                   default:
                                     break;
                                   // Dodaj inne przypadki, jeśli masz więcej rodzajów szyfrowania

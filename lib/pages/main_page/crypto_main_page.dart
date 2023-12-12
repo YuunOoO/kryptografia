@@ -19,7 +19,7 @@ class _CryptoMainPageState extends State<CryptoMainPage> {
           child: Stack(
         children: [
           Padding(
-              padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * .3),
+              padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * .25),
               child: Center(child: Image.asset("assets/crypto.gif"))),
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -74,13 +74,32 @@ class _CryptoMainPageState extends State<CryptoMainPage> {
                         SizedBox(
                           height: 10,
                         ),
-                        ConsoleButton(
-                          cryptoType: CryptoType.rsa,
-                        ),
+
                       ],
                     ),
                   ],
                 ),
+                const Spacer(),
+                const Wrap(
+                  alignment: WrapAlignment.center  ,
+                  verticalDirection: VerticalDirection.up,
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    ConsoleButton(
+                      cryptoType: CryptoType.rsa,
+                    ),
+                    ConsoleButton(
+                      cryptoType: CryptoType.des,
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    ConsoleButton(
+                      cryptoType: CryptoType.rc4,
+                    ),
+                  ],
+                )
               ],
             ),
           ),
