@@ -1,149 +1,95 @@
-import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:kryptografia/pages/encrypt_page/crypto_text_input.dart';
 import 'package:kryptografia/pages/hamming_page/hamming_button.dart';
 
 class HammingCode {
-  // Funkcja kodująca ciąg bitów za pomocą kodu Hamminga (7,4)
-  static bool isPowerOfTwo(int x) {
-    return (x & (x - 1)) == 0;
-  }
-
+  // Funkcja kodująca algorytmem Hamminga (7,4)
   static String hammingEncode(String input) {
-    // Inicjalizacja zakodowanego ciągu
-    String encoded = '';
+    // Zamiana tekstu na ciąg binarny
+    List<int> dataBits =
+        input.codeUnits.expand((char) => char.toRadixString(2).padLeft(8, '0').split('').map(int.parse)).toList();
 
-    // Zamień string na ciąg bitów
-    String base64input = base64Encode(utf8.encode(input));
-    print(base64input);
-    List<int> bytes = base64.decode(base64input);
-    String binaryString = bytes.map((byte) {
-      String binaryByte = byte.toRadixString(2);
-      return '0' * (8 - binaryByte.length) + binaryByte;
-    }).join('');
-    print(binaryString);
+    // Dodaj bity parzystości
+    List<int> encodedData = [];
+    int parity1, parity2, parity4;
 
-    int dataLength = binaryString.length;
-    int encodedLength = (dataLength ~/ 4) * 7 + (dataLength % 4) + 7; // Oblicz długość zakodowanego ciągu.
+    for (int i = 0; i < dataBits.length; i += 4) {
+      parity1 = dataBits[i] ^ dataBits[i + 1] ^ dataBits[i + 3];
+      parity2 = dataBits[i] ^ dataBits[i + 2] ^ dataBits[i + 3];
+      parity4 = dataBits[i + 1] ^ dataBits[i + 2] ^ dataBits[i + 3];
 
-    List<int> encodedData = List<int>.generate(encodedLength, (index) => 0);
+      encodedData.addAll([parity1, parity2, dataBits[i], parity4, dataBits[i + 1], dataBits[i + 2], dataBits[i + 3]]);
+    }
 
-    int dataIndex = 0;
-    int encodedIndex = 0;
+    return encodedData.join().toString();
+  }
 
-    while (dataIndex < dataLength) {
-      for (int i = 0; i < 7; i++) {
-        if (isPowerOfTwo(i + 1)) {
-          // To jest bit parzystości, pozostawiamy go na razie zerem.
-          encodedIndex++;
+  // Funkcja uszkadzająca dane (symuluje błąd w transmisji)
+  static String damageData(String data) {
+    List<int> damagedData = data.split('').map((e) => int.parse(e)).toList();
+    // Symulacja uszkodzenia jednego bitu
+    if (damagedData.isNotEmpty) {
+      int indexToDamage = Random().nextInt(damagedData.length);
+      damagedData[indexToDamage] = 1 - damagedData[indexToDamage];
+    }
+
+    return damagedData.join();
+  }
+
+  static int isEvenParity(List<int> bits) {
+    int onesCount = bits.fold(0, (sum, bit) => sum + bit);
+    if (onesCount % 2 == 0) {
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+
+  // Funkcja dekodująca algorytmem Hamminga (7,4)
+  static String hammingDecode(String damagedData) {
+    List<int> receivedBits = damagedData.split('').map((e) => int.parse(e)).toList();
+    List<int> decodedData = [];
+
+    for (int i = 0; i < receivedBits.length; i += 7) {
+      int p1 = receivedBits[i + 0];
+      int p2 = receivedBits[i + 1];
+      int p4 = receivedBits[i + 3];
+
+      int d3 = receivedBits[i + 2];
+      int d5 = receivedBits[i + 4];
+      int d6 = receivedBits[i + 5];
+      int d7 = receivedBits[i + 6];
+
+      p1 = isEvenParity([p1, d3, d5, d7]);
+      p2 = isEvenParity([p2, d3, d6, d7]);
+      p4 = isEvenParity([p4, d5, d6, d7]);
+
+      int errorPosition = p1 + p2 * 2 + p4 * 4;
+      if (errorPosition != 0) {
+        if (receivedBits[i + errorPosition -1] == 0) {
+          receivedBits[i + errorPosition -1] = 1;
         } else {
-          encodedData[encodedIndex] = int.parse(binaryString[dataIndex]);
-          encodedIndex++;
-          dataIndex++;
-        }
-      }
-    }
-
-    // Oblicz bity parzystości.
-    for (int i = 0; i < 3; i++) {
-      int parityBitPosition = 1 << i;
-      for (int j = parityBitPosition - 1; j < encodedLength; j += 1 << (i + 1)) {
-        for (int k = 0; k < parityBitPosition && j + k < encodedLength; k++) {
-          encodedData[parityBitPosition - 1] ^= encodedData[j + k];
-        }
-      }
-    }
-
-    String encodedBinaryString = encodedData.join();
-
-    return encodedBinaryString;
-  }
-
-  static String binaryToBase64(String binary) {
-    List<int> bytes = List.generate(binary.length ~/ 8, (i) {
-      return int.parse(binary.substring(i * 8, (i + 1) * 8), radix: 2);
-    });
-
-    String base64String = base64.encode(Uint8List.fromList(bytes));
-    return base64String;
-  }
-
-  static String hammingDecode(String encodedData) {
-    int encodedLength = encodedData.length;
-    int dataLength = (encodedLength ~/ 7) * 4; // Oblicz długość danych.
-
-    List<int> decodedData = List<int>.generate(dataLength, (index) => 0);
-    List<int> errorPositions = [];
-
-    int dataIndex = 0;
-    int encodedIndex = 0;
-
-    while (dataIndex < dataLength) {
-      int parityBits = 0; // Bit parzystości, który będzie używany do sprawdzania błędów.
-      List<int> parityBitsValues = [];
-
-      for (int i = 0; i < 7; i++) {
-        if (isPowerOfTwo(i + 1)) {
-          parityBits ^= int.parse(encodedData[encodedIndex]);
-          parityBitsValues.add(int.parse(encodedData[encodedIndex]));
-          encodedIndex++;
-        } else {
-          decodedData[dataIndex] = int.parse(encodedData[encodedIndex]);
-          encodedIndex++;
-          dataIndex++;
+          receivedBits[i + errorPosition -1] = 0;
         }
       }
 
-      if (parityBits != 0) {
-        // Jeśli bit parzystości nie jest zerem, oznacza to błąd.
-        int errorPosition = 0;
-        for (int i = 0; i < parityBitsValues.length; i++) {
-          errorPosition += parityBitsValues[i] * (1 << i);
-        }
-        errorPositions.add(errorPosition);
-      }
+      decodedData.addAll([receivedBits[i + 2], receivedBits[i + 4], receivedBits[i + 5], receivedBits[i + 6]]);
     }
 
-    // Próbuj naprawić pojedynczy błąd w danych
-    for (int errorPosition in errorPositions) {
-      int correctedBit = int.parse(encodedData[errorPosition - 1]) == 0 ? 1 : 0;
-      decodedData[errorPosition - 1] = correctedBit;
-    }
-
-    // Usuń nadmiarowe zera na końcu odkodowanego ciągu.
-    int trimmedDataLength = dataLength;
-    while (trimmedDataLength > 0 && decodedData[trimmedDataLength - 1] == 0) {
-      trimmedDataLength--;
-    }
-
-    String decodedBinaryString = decodedData.sublist(0, trimmedDataLength).join();
-    print(decodedBinaryString);
-    return decodedBinaryString;
+    return decodedData.join();
   }
 
-  static String stringToBinary(String input) {
-    StringBuffer binaryString = StringBuffer();
-
-    for (int i = 0; i < input.length; i++) {
-      String binaryChar = input.codeUnitAt(i).toRadixString(2);
-      binaryString.write('0' * (8 - binaryChar.length) + binaryChar);
+  // Funkcja zamieniająca ciąg bitów na tekst
+  static String binaryToString(String binaryData) {
+    List<int> asciiCodes = [];
+    for (int i = 0; i < binaryData.length; i += 8) {
+      int decimalValue = int.parse(binaryData.substring(i, i + 8), radix: 2);
+      asciiCodes.add(decimalValue);
     }
 
-    return binaryString.toString();
-  }
-
-  static String binaryToString(String binary) {
-    String text = '';
-    for (int i = 0; i < binary.length; i += 8) {
-      String binaryChar = binary.substring(i, i + 8);
-      int charCode = int.parse(binaryChar, radix: 2);
-      text += String.fromCharCode(charCode);
-      print(text);
-    }
-    return text;
+    return String.fromCharCodes(asciiCodes);
   }
 }
 
@@ -184,10 +130,7 @@ class HammingCodeScreenState extends State<HammingCodeScreen> {
 
   void damageData() {
     setState(() {
-      // Uszkadzanie danych - zamieniamy losowy bit
-      var random = Random();
-      int index = random.nextInt(encoded.length);
-      damaged = encoded.substring(0, index) + (encoded[index] == '0' ? '1' : '0') + encoded.substring(index + 1);
+      damaged = HammingCode.damageData(encoded);
     });
   }
 
@@ -198,17 +141,29 @@ class HammingCodeScreenState extends State<HammingCodeScreen> {
     });
   }
 
+  bool isParityBit(int index) {
+    int i = index;
+    int modulo = i % 7;
+    if (modulo == 0 || modulo == 1 || modulo == 3) {
+      return true;
+    }
+    return false;
+  }
+
   // Funkcja do utworzenia kolorowego widgetu bitu
-  Widget createBitWidget(String bit, bool dmg) {
-    Color textColor = Colors.black; // Domyślny kolor tekstu
+  Widget createBitWidget(String bit, bool dmg, int index, bool decoded) {
+    Color textColor = Colors.white; // Domyślny kolor tekstu
     if (dmg) {
       textColor = Colors.red;
     } else {
-      if (bit == '1') {
+      if (!isParityBit(index)) {
         textColor = Colors.green; // Kolor zielony dla bitów informacyjnych
-      } else if (bit == '0') {
+      } else {
         textColor = Colors.blue; // Kolor niebieski dla bitów parzystości
       }
+    }
+    if (decoded) {
+      textColor = Colors.green;
     }
 
     return Container(
@@ -262,7 +217,7 @@ class HammingCodeScreenState extends State<HammingCodeScreen> {
                       for (int i = 0; i < encoded.length; i++)
                         Container(
                             margin: const EdgeInsets.symmetric(horizontal: 2),
-                            child: createBitWidget(encoded[i], false)),
+                            child: createBitWidget(encoded[i], false, i, false)),
                     ],
                   ),
                 ),
@@ -286,9 +241,9 @@ class HammingCodeScreenState extends State<HammingCodeScreen> {
                           child: LayoutBuilder(
                             builder: (context, constraints) {
                               if (encoded[i] == damaged[i]) {
-                                return createBitWidget(damaged[i], false);
+                                return createBitWidget(damaged[i], false, i, false);
                               } else {
-                                return createBitWidget(damaged[i], true);
+                                return createBitWidget(damaged[i], true, i, false);
                               }
                             },
                           ),
@@ -313,7 +268,7 @@ class HammingCodeScreenState extends State<HammingCodeScreen> {
                       for (int i = 0; i < decoded.length; i++)
                         Container(
                             margin: const EdgeInsets.symmetric(horizontal: 2),
-                            child: createBitWidget(decoded[i], false)),
+                            child: createBitWidget(decoded[i], false, i, true)),
                     ],
                   ),
                 ),
